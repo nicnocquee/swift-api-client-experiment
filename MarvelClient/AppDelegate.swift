@@ -15,6 +15,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
+
+        let apiClient = MarvelAPIClient(publicKey: "<your_public_key>", privateKey: "<your_private_key>")
+        let getCharacters = GetCharacters(limit: 10, offset: 0)
+        apiClient.send(getCharacters) { (result) in
+            switch result {
+            case .success(let characters):
+                print(characters.map({ $0.description }).joined(separator: "\n"))
+            case .failure(let error):
+                print(error)
+            }
+        }
+
         return true
     }
 
