@@ -14,16 +14,20 @@ public protocol APIClient {
 }
 
 public class MarvelAPIClient: APIClient {
-    private let session = URLSession(configuration: .default)
+    private let session: URLSession
 
     private let baseEndpointUrl: URL
     private let publicKey: String
     private let privateKey: String
 
-    public init (publicKey: String, privateKey: String, baseEndpointUrl: String = "https://gateway.marvel.com:443/v1/public/") {
+    public init (publicKey: String,
+                 privateKey: String,
+                 baseEndpointUrl: String = "https://gateway.marvel.com:443/v1/public/",
+                 session: URLSession = URLSession(configuration: .default)) {
         self.publicKey = publicKey
         self.privateKey = privateKey
         self.baseEndpointUrl = URL(string: baseEndpointUrl)!
+        self.session = session
     }
 
     public func send<T: APIRequest>(_ request: T, completion: @escaping ResultCallback<T.ResponseResult>) {
@@ -33,6 +37,10 @@ public class MarvelAPIClient: APIClient {
             if let data = data {
                 do {
                     let marvelResponse = try JSONDecoder().decode(MarvelResponse<T.ResponseResult>.self, from: data)
+                    
+                    guard marvelResponse.code.description == "200" else {
+                        throw MarvelError.server(message: marvelResponse.code.description)
+                    }
                     if let marvelResponseData = marvelResponse.data {
                         completion(.success(marvelResponseData.results))
                     } else if let message = marvelResponse.status {
